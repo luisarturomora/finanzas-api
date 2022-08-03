@@ -1,0 +1,32 @@
+"use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var base_controller_1 = require("../base.controller");
+var enums_1 = require("../../utils/enums");
+var payment_deposit_model_1 = require("../../models/administration/payment.deposit.model");
+var PaymentDepositController = /** @class */ (function (_super) {
+    __extends(PaymentDepositController, _super);
+    function PaymentDepositController() {
+        var _this = this;
+        var model = new payment_deposit_model_1.PaymentDepositModel();
+        _this = _super.call(this, model) || this;
+        _this.model = model;
+        _this.document_name = enums_1.COLLECTION_NAME_ENUM.payment_deposit;
+        return _this;
+    }
+    return PaymentDepositController;
+}(base_controller_1.BaseController));
+exports.PaymentDepositController = PaymentDepositController;
+//# sourceMappingURL=payment.deposit.controller.js.map

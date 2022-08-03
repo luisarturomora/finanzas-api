@@ -1,0 +1,29 @@
+{
+    "dbConfig":{
+        "host": "127.0.0.1",
+        "port": "27017",
+        "dbName": "finanzas",
+        "user": "sa",
+        "password": "Aa@123456"
+    },
+    "port":"8080",
+    "is_saas": false,
+    "max_file_size": "2mb",
+    "invoice_generattion_hour": 16,
+    "invoice_generattion_minute": 13,
+    "sessionConfig": {
+        "secret": "finanza-a@123456-saas",
+        "options": { 
+            "expiresIn": 3600000
+        }
+    },
+    "mail_config": {
+        "host": "smtp-mail.outlook.com",
+        "port": 587,
+        "secure": false,
+        "auth": {
+            "user": "",
+            "pass": ""
+        }
+    }
+}

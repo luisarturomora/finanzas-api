@@ -1,0 +1,30 @@
+{
+    "dbConfig":{
+        "host": "cluster0-shard-00-02-hd33l.mongodb.net",
+        "port": "27017",
+        "dbName": "finanzas",
+        "user": "wilsonhamiltond",
+        "password": "drullard1987",
+        "ssl": true
+    },
+    "port":"8080",
+    "is_saas": false,
+    "max_file_size": "2mb",
+    "invoice_generattion_hour": 16,
+    "invoice_generattion_minute": 13,
+    "sessionConfig": {
+        "secret": "finanza-a@123456-saas",
+        "options": { 
+            "expiresIn": 900000
+        }
+    },
+    "mail_config": {
+        "host": "smtp-mail.outlook.com",
+        "port": 587,
+        "secure": false,
+        "auth": {
+            "user": "",
+            "pass": ""
+        }
+    }
+}

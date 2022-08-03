@@ -1,0 +1,1955 @@
+<!doctype html>
+
+<head>
+	<title>Mongo Schema</title>
+
+	<style>
+		svg {
+			background-color: white;
+			font-family: "Helvetic Neue", Helvetica, Arial, sans-serif;
+			font-size: small;
+		}
+
+		.node rect,
+		.node circle,
+		.node ellipse {
+			stroke: #333;
+			opacity: 0.8;
+			fill: #fff;
+			fill-opacity: 0.6;
+		}
+
+		.edgePath path {
+			stroke: #333;
+			fill: #333;
+			fill-opacity: 1;
+			stroke-opacity: 1;
+		}
+
+		.cluster {
+			stroke: #999;
+			fill: #888;
+			fill-opacity: 0.3;
+			stroke-opacity: 0.6;
+		}
+
+		.entity-name rect {
+			fill: #08f;
+			fill-opacity: 0.3;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="background"></div>
+	<div class="container">
+		<svg></svg>
+	</div>
+	<canvas width="1024" height="1024" style="display:none"></canvas>
+
+
+	<script src="https://d3js.org/d3.v3.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.4.17/dagre-d3.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js"
+		integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+
+	<script>
+		var drawERM = function (data) {
+			var width = window.innerWidth,
+				initialHeight = window.innerHeight,
+				svg = d3.select("body div.container svg"),
+				inner = svg.append("g");
+
+			svg.attr('width', width).attr('height', initialHeight);
+
+			var resizeGraph = function (doCenter) {
+				var newWidth = window.innerWidth;
+				var newHeight = window.innerHeight;
+
+				if (newWidth < g.graph().width + 40) {
+					newWidth = g.graph().width + 40;
+				}
+				if (newHeight < g.graph().height + 40) {
+					newHeight = g.graph().height + 40;
+				}
+				svg.attr('width', newWidth).attr('height', newHeight);
+
+				// Center the graph
+				if (doCenter) {
+					zoom
+						.translate([(svg.attr("width") - g.graph().width * initialScale) / 2, 20])
+						.scale(initialScale)
+						.event(svg);
+				}
+			}
+
+			// Set up zoom support
+			var zoom = d3.behavior.zoom().on("zoom", function () {
+				inner.attr("transform", "translate(" + d3.event.translate + ")" +
+					"scale(" + d3.event.scale + ")");
+			});
+			svg.call(zoom);
+
+			// create graph
+			var g = new dagreD3.graphlib.Graph({
+				multigraph: false,
+				compound: true
+			}).setGraph({
+				rankdir: "LR",
+				edgesep: 25,
+				nodesep: 0
+			});
+
+			var links = [];
+
+			var addField = function (collectionName, fieldName, fieldInfo, parentFieldName) {
+				var nodeName = parentFieldName ? collectionName + "_" + parentFieldName + "_" + fieldName : collectionName + "_" + fieldName;
+				g.setNode(nodeName, {
+					label: (parentFieldName ? parentFieldName + "." + fieldName : fieldName) + ": " + fieldInfo.type,
+					width: 300
+				});
+				g.setParent(nodeName, "___" + collectionName + "_container");
+
+				if (fieldInfo.foreignKey && fieldInfo.references) {
+					links.push({
+						from: nodeName,
+						to: fieldInfo.references + "__id"
+					});
+				}
+
+				if (fieldInfo.type == "Object" && fieldInfo.structure) {
+					for (var subFieldName in fieldInfo.structure) {
+						addField(collectionName, subFieldName, fieldInfo.structure[subFieldName], parentFieldName ? parentFieldName + "." + fieldName : fieldName);
+					}
+				}
+			};
+
+			var addCollection = function (collectionName, collectionInfo) {
+				g.setNode("___" + collectionName + "_container", {
+					label: ""
+				});
+				g.setNode("___" + collectionName + "_title", {
+					label: collectionName,
+					class: 'entity-name',
+					labelStyle: 'font-weight:bold;',
+					width: 300
+				});
+
+				g.setParent("___" + collectionName + "_title", "___" + collectionName + "_container");
+
+				for (var fieldName in collectionInfo) {
+					addField(collectionName, fieldName, collectionInfo[fieldName]);
+				}
+			};
+
+			for (var collectionName in data) {
+				addCollection(collectionName, data[collectionName]);
+			}
+
+			links.map(function (link) {
+				g.setEdge(link.from, link.to, {
+					label: '',
+					lineInterpolate: 'monotone'
+				});
+			});
+
+			// Create the renderer
+			var render = dagreD3.render();
+
+			// Run the renderer. This is what draws the final graph.
+			render(inner, g);
+
+			// adjust height
+			var initialScale = 1; //0.75;
+
+			window.addEventListener('resize', function () {
+				resizeGraph();
+			});
+
+			resizeGraph(true);
+
+		};
+
+		var data = {
+			"account_types": {
+				"_id": {
+					"primaryKey": true,
+					"type": "Object",
+					"required": true
+				},
+				"description": {
+					"type": "string",
+					"required": true
+				},
+				"origin": {
+					"type": "string",
+					"required": true
+				},
+				"category": {
+					"type": "string",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"fields": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "fields",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				},
+				"parent": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "account_types",
+					"required": true
+				}
+			},
+			"items": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"taxes": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "taxes",
+					"required": true
+				},
+				"fields": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "fields",
+					"required": true
+				},
+				"item_type": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "item_types",
+					"required": true
+				},
+				"code": {
+					"type": "string",
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"value": {
+					"type": "number",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				},
+				"process": {
+					"type": "Array",
+					"required": true
+				}
+			},
+			"credit_note_types": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"description": {
+					"type": "string",
+					"required": true
+				},
+				"account": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "accounts",
+					"required": true
+				},
+				"document_type": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "document_types",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"stocks": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"item": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "items",
+					"required": true
+				},
+				"quantity": {
+					"type": "number",
+					"required": true
+				},
+				"type": {
+					"type": "string",
+					"required": true
+				},
+				"office": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "offices",
+					"required": true
+				},
+				"note": {
+					"type": "string",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				}
+			},
+			"provider_types": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"fields": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "fields",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"description": {
+					"type": "string",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"modules": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"add": {
+					"type": "boolean",
+					"required": true
+				},
+				"edit": {
+					"type": "boolean",
+					"required": true
+				},
+				"delete": {
+					"type": "boolean",
+					"required": true
+				},
+				"print": {
+					"type": "boolean",
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"url": {
+					"type": "string",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				},
+				"section": {
+					"type": "string",
+					"required": true
+				}
+			},
+			"purchase_types": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"fields": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "fields",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"description": {
+					"type": "string",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				},
+				"account": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "accounts",
+					"required": true
+				},
+				"document_type": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "document_types",
+					"required": true
+				}
+			},
+			"settings": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"logo": {
+					"type": "string",
+					"required": true
+				},
+				"background": {
+					"type": "string",
+					"required": true
+				},
+				"description": {
+					"type": "string",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"currencies": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"code": {
+					"type": "string",
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"plural_name": {
+					"type": "string",
+					"required": true
+				},
+				"symbol": {
+					"type": "string",
+					"required": true
+				},
+				"symbol_native": {
+					"type": "string",
+					"required": true
+				},
+				"rounding": {
+					"type": "number",
+					"required": true
+				},
+				"decimal_digits": {
+					"type": "number",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"ncfs": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"type": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "ncf_types",
+					"required": true
+				},
+				"sequential": {
+					"type": "number",
+					"required": true
+				},
+				"serie": {
+					"type": "string",
+					"required": true
+				},
+				"status": {
+					"type": "string",
+					"required": true
+				},
+				"end_date": {
+					"type": "Date",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"roles": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"modules": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "modules",
+					"required": true
+				},
+				"widgets": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "widgets",
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"description": {
+					"type": "string",
+					"required": true
+				},
+				"actived": {
+					"type": "boolean",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"client_types": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"fields": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "fields",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"description": {
+					"type": "string",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"fields": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"is_calculate": {
+					"type": "boolean",
+					"required": true
+				},
+				"multiple_instance": {
+					"type": "boolean",
+					"required": true
+				},
+				"fields": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "fields",
+					"required": true
+				},
+				"instances": {
+					"type": "Array",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"equation": {
+					"type": "Object",
+					"required": true
+				},
+				"options": {
+					"type": "Array",
+					"required": true
+				},
+				"text": {
+					"type": "string",
+					"required": true
+				},
+				"order": {
+					"type": "number",
+					"required": true
+				},
+				"type": {
+					"type": "string",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"payment_methods": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"fields": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "fields",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"invoice_recurrencies": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"recurrency": {
+					"type": "boolean",
+					"required": true
+				},
+				"invoices": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "invoices",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"start_date": {
+					"type": "Date",
+					"required": true
+				},
+				"items": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "items",
+					"required": true
+				},
+				"client": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "clients",
+					"required": true
+				},
+				"office": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "offices",
+					"required": true
+				},
+				"status": {
+					"type": "string",
+					"required": true
+				},
+				"currency": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "currencies",
+					"required": true
+				},
+				"frequency": {
+					"type": "number",
+					"required": true
+				},
+				"account": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "accounts",
+					"required": true
+				},
+				"type": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "invoice_types",
+					"required": true
+				},
+				"ncf_type": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "ncf_types",
+					"required": true
+				},
+				"note": {
+					"type": "string",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"number": {
+					"type": "number",
+					"required": true
+				},
+				"fields": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "fields",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				},
+				"end_date": {
+					"type": "Date",
+					"required": true
+				}
+			},
+			"item_types": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"fields": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "fields",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"code": {
+					"type": "string",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"packages": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"quantity": {
+					"type": "number",
+					"required": true
+				},
+				"config": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "package_configs",
+					"required": true
+				},
+				"date": {
+					"type": "Date",
+					"required": true
+				},
+				"number": {
+					"type": "number",
+					"required": true
+				},
+				"status": {
+					"type": "string",
+					"required": true
+				},
+				"note": {
+					"type": "string",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"package_configs": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"items": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "items",
+					"required": true
+				},
+				"code": {
+					"type": "string",
+					"required": true
+				},
+				"description": {
+					"type": "string",
+					"required": true
+				},
+				"office": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "offices",
+					"required": true
+				},
+				"item": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "items",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"debit_note_types": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"description": {
+					"type": "string",
+					"required": true
+				},
+				"account": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "accounts",
+					"required": true
+				},
+				"document_type": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "document_types",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"item_processes": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"document_type": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "document_types",
+					"required": true
+				},
+				"account": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "accounts",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"boxes": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"office": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "offices",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"users": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"roles": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "roles",
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"last_name": {
+					"type": "string",
+					"required": true
+				},
+				"user_name": {
+					"type": "string",
+					"required": true
+				},
+				"password": {
+					"type": "string",
+					"required": true
+				},
+				"status": {
+					"type": "string",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "settings",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				},
+				"currency": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "currencies",
+					"required": true
+				},
+				"offices": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "offices",
+					"required": true
+				},
+				"email": {
+					"type": "string",
+					"required": true
+				},
+				"image": {
+					"type": "string",
+					"required": true
+				}
+			},
+			"positions": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"items": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "items",
+					"required": true
+				},
+				"fields": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "fields",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"description": {
+					"type": "string",
+					"required": true
+				},
+				"salary": {
+					"type": "number",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				},
+				"commission": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"offices": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"code": {
+					"type": "string",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "users",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"item_commissions": {},
+			"purchases": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"recurrency": {
+					"type": "boolean",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"items": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "items",
+					"required": true
+				},
+				"provider": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "providers",
+					"required": true
+				},
+				"status": {
+					"type": "string",
+					"required": true
+				},
+				"date": {
+					"type": "Date",
+					"required": true
+				},
+				"currency": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "currencies",
+					"required": true
+				},
+				"type": {
+					"type": "Object",
+					"required": true
+				},
+				"account": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "accounts",
+					"required": true
+				},
+				"frequency": {
+					"type": "number",
+					"required": true
+				},
+				"number": {
+					"type": "number",
+					"required": true
+				},
+				"office": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "offices",
+					"required": true
+				},
+				"ncf": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "ncfs",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"fields": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "fields",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				},
+				"note": {
+					"type": "string",
+					"required": true
+				}
+			},
+			"ncf_types": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"code": {
+					"type": "string",
+					"required": true
+				},
+				"type": {
+					"type": "string",
+					"required": true
+				},
+				"serie": {
+					"type": "string",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				},
+				"document_types": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "document_types",
+					"required": true
+				}
+			},
+			"providers": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "users",
+					"required": true
+				},
+				"type": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "provider_types",
+					"required": true
+				},
+				"fields": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "fields",
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"last_name": {
+					"type": "string",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"accounts": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"fields": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "fields",
+					"required": true
+				},
+				"type": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "account_types",
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"code": {
+					"type": "string",
+					"required": true
+				},
+				"color": {
+					"type": "string",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "users",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				},
+				"currency": {
+					"type": "Object",
+					"references": "currencies",
+					"foreignKey": true,
+					"required": true
+				},
+				"note": {
+					"type": "string",
+					"required": true
+				},
+				"parent": {
+					"type": "Object",
+					"references": "accounts",
+					"foreignKey": true,
+					"required": true
+				}
+			},
+			"document_types": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"description": {
+					"type": "string",
+					"required": true
+				},
+				"entry_origin": {
+					"type": "string",
+					"required": true
+				},
+				"origin": {
+					"type": "string",
+					"required": true
+				},
+				"account_category": {
+					"type": "string",
+					"required": true
+				},
+				"account_category2": {
+					"type": "string",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "users",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"eventlogs": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"module": {
+					"type": "string",
+					"required": true
+				},
+				"action": {
+					"type": "string",
+					"required": true
+				},
+				"object": {
+					"type": "string",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "users",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"invoice_types": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"fields": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "fields",
+					"required": true
+				},
+				"code": {
+					"type": "string",
+					"required": true
+				},
+				"description": {
+					"type": "string",
+					"required": true
+				},
+				"account": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "accounts",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "users",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				},
+				"document_type": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "document_types",
+					"required": true
+				}
+			},
+			"invoices": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"acknowledgments": {
+					"type": "Array",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "users",
+					"required": true
+				},
+				"items": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "items",
+					"required": true
+				},
+				"employees": {
+					"type": "Array",
+					"required": true
+				},
+				"client": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "clients",
+					"required": true
+				},
+				"status": {
+					"type": "string",
+					"required": true
+				},
+				"ncf_type": {
+					"type": "Object",
+					"required": true
+				},
+				"date": {
+					"type": "Date",
+					"required": true
+				},
+				"fields": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "fields",
+					"required": true
+				},
+				"account": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "accounts",
+					"required": true
+				},
+				"type": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "invoice_types",
+					"required": true
+				},
+				"office": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "offices",
+					"required": true
+				},
+				"currency": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "currencies",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"number": {
+					"type": "number",
+					"required": true
+				},
+				"ncf": {
+					"type": "Object",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				},
+				"note": {
+					"type": "string",
+					"required": true
+				},
+				"recurrency": {
+					"type": "boolean",
+					"required": true
+				},
+				"frequency": {
+					"type": "number",
+					"required": true
+				},
+				"recurrency_end": {
+					"type": "Date",
+					"required": true
+				},
+				"code": {
+					"type": "string",
+					"required": true
+				}
+			},
+			"payments": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"invoices": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "invoices",
+					"required": true
+				},
+				"purchases": {
+					"type": "Array",
+					"required": true
+				},
+				"date": {
+					"type": "Date",
+					"required": true
+				},
+				"client": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "clients",
+					"required": true
+				},
+				"value": {
+					"type": "number",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "users",
+					"required": true
+				},
+				"method": {
+					"type": "Object",
+					"required": true
+				},
+				"concept": {
+					"type": "string",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"fields": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "fields",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				},
+				"provider": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "providers",
+					"required": true
+				}
+			},
+			"clients": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"create_user": {
+					"type": "Object",
+					"required": true
+				},
+				"type": {
+					"type": "Object",
+					"foreignKey": true,
+					"references": "client_types",
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"last_name": {
+					"type": "string",
+					"required": true
+				},
+				"setting": {
+					"type": "Object",
+					"required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				},
+				"fields": {
+					"type": "Array",
+					"foreignKey": true,
+					"references": "fields",
+					"required": true
+				}
+			},
+			"taxes": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				},
+				"default": {
+					"type": "boolean",
+					"required": true
+				},
+				"name": {
+					"type": "string",
+					"required": true
+				},
+				"value": {
+					"type": "number",
+					"required": true
+				},
+				"create_user": {
+					"type": "Object","required": true
+				},
+				"setting": {
+					"type": "Object","required": true
+				},
+				"create_date": {
+					"type": "Date",
+					"required": true
+				},
+				"__v": {
+					"type": "number",
+					"required": true
+				}
+			},
+			"employees": {},
+			"widgets": {
+				"_id": {
+					"type": "Object",
+					"primaryKey": true,
+					"required": true
+				}
+			}
+		};
+		drawERM(data);
+
+		$("canvas").attr("width", $("svg").width());
+		$("canvas").attr("height", $("svg").height());
+
+		var st = $(document.createElement("style"));
+		st.text("/* <![CDATA[ */" + $("style").text() + "/* ]]> */");
+		$("svg").append(st);
+		var html = d3.select("svg")
+			.attr("version", 1.1)
+			.attr("xmlns", "http://www.w3.org/2000/svg")
+			.node().parentNode.innerHTML;
+
+		var imgsrc = 'data:image/svg+xml;base64,' + btoa(html);
+
+		var canvas = document.querySelector("canvas"),
+			context = canvas.getContext("2d");
+
+		var image = new Image;
+		image.src = imgsrc;
+		image.onload = function () {
+			context.drawImage(image, 0, 0);
+
+			var canvasdata = canvas.toDataURL("image/png");
+
+			var a = document.createElement("a");
+			a.download = "diagram.png";
+			a.href = canvasdata;
+			document.body.appendChild(a);
+			a.click();
+		};
+	</script>
+</body>

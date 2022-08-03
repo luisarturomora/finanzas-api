@@ -1,0 +1,40 @@
+import { IUser } from '../security/user.interface';
+import { ISetting } from './setting.interface';
+import { IInvoice } from './invoice.interface'; 
+import { IDebitNote } from './debit.note.interface'; 
+import { ICreditNote } from './credit.note.interface';
+import { IPurchase } from './purchase.interface'; 
+import { IConvertionRate } from './convertion.rate.interface';
+import { IAccount } from '../configuration/account.interface';   
+import { IPayment } from './payment.interface';
+import { IItem } from './item.interface';
+import { ITax } from '../configuration/tax.interface';
+import { ICurrency } from './currency.interface';
+import { IDocumentType } from '../configuration/document.type.interface';
+import { IField } from '../configuration/field.interface';
+import { IPaymentDeposit } from './payment.deposit.interface';
+import { IManualEntry } from './manual.entry.interface';
+
+export interface IAccountEntry{
+    _id: string;
+    note: string;
+    origin: string;
+    amount: number;
+    item?: IItem;
+    date: Date;
+    tax?: ITax;
+    invoice?: IInvoice;
+    payment?: IPayment;
+    debit_note?: IDebitNote;
+    credit_note?: ICreditNote;
+    payment_deposit?: IPaymentDeposit;
+    manual_entry?: IManualEntry;
+    purchase: IPurchase;
+    account: IAccount;
+    fields: IField[];
+    currency: ICurrency;
+    document_type?: IDocumentType;
+    create_date: Date;
+    create_user: IUser;
+    setting: ISetting;
+}
