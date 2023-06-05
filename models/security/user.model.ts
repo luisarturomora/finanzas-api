@@ -79,6 +79,7 @@ export class UserModel extends BaseModel{
 
     async login( _user:any ){
         try{
+            console.log('login model')
             _user.password = Utils.encrypt(_user.password);
             let users = await this.filter( {
                     user_name: _user.user_name,

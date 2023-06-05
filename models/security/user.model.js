@@ -160,6 +160,7 @@ var UserModel = /** @class */ (function (_super) {
                 switch (_a.label) {
                     case 0:
                         _a.trys.push([0, 2, 3, 4]);
+                        console.log('login model');
                         _user.password = utils_1.Utils.encrypt(_user.password);
                         return [4 /*yield*/, this.filter({
                                 user_name: _user.user_name,

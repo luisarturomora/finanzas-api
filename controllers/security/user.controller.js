@@ -117,6 +117,7 @@ var UserController = /** @class */ (function (_super) {
                 switch (_a.label) {
                     case 0:
                         _a.trys.push([0, 2, , 3]);
+                        console.log('login controller');
                         _user = req.body;
                         return [4 /*yield*/, this.model.login(_user)];
                     case 1:

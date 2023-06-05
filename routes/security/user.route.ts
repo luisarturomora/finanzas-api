@@ -12,6 +12,7 @@ export class UserRoute extends BaseRoute{
         let route = Router();
         
         route.post( '/api/v0/user/login', (req: Request, res:Response) =>{
+            console.log('login route');
             this.controller.login(req, res);
         });
         route.post( '/api/v1/user/logged', (req: Request, res:Response) =>{

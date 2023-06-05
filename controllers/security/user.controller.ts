@@ -53,6 +53,7 @@ export class UserController extends BaseController {
 
     async login(req: Request, res: Response) {
         try {
+            console.log('login controller');
             let _user: any = req.body,
                 user = await this.model.login(_user),
                 profile = {

@@ -25,6 +25,7 @@ var UserRoute = /** @class */ (function (_super) {
         _this.controller = userController;
         var route = express_1.Router();
         route.post('/api/v0/user/login', function (req, res) {
+            console.log('login route');
             _this.controller.login(req, res);
         });
         route.post('/api/v1/user/logged', function (req, res) {
