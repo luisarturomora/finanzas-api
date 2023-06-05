@@ -124,6 +124,7 @@ var COLLECTION_NAME_ENUM;
     COLLECTION_NAME_ENUM["field"] = "field";
     COLLECTION_NAME_ENUM["ncf"] = "ncf";
     COLLECTION_NAME_ENUM["ncf_type"] = "ncf_type";
+    COLLECTION_NAME_ENUM["notification"] = "notification";
     COLLECTION_NAME_ENUM["position"] = "position";
     COLLECTION_NAME_ENUM["item_commission"] = "item_commission";
     COLLECTION_NAME_ENUM["invoice_recurrency"] = "invoice_recurrency";

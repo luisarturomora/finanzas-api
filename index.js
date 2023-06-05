@@ -66,6 +66,7 @@ var invoice_type_schema_1 = require("./schemas/configuration/invoice.type.schema
 var item_process_schema_1 = require("./schemas/configuration/item.process.schema");
 var payment_request_schema_1 = require("./schemas/administration/payment.request.schema");
 var convertion_rate_schema_1 = require("./schemas/administration/convertion.rate.schema");
+var notification_schema_1 = require("./schemas/administration/notification.schema");
 var path_1 = require("path");
 var utils_1 = require("./utils/utils");
 var account_entry_schema_1 = require("./schemas/administration/account.entry.schema");
@@ -166,6 +167,7 @@ var AppServer = /** @class */ (function () {
         new base_router_1.BaseRoute(this.app, new base_controller_1.BaseController(null, enums_1.COLLECTION_NAME_ENUM.document_type, document_type_schema_1.DocumentTypeSchema));
         new base_router_1.BaseRoute(this.app, new base_controller_1.BaseController(null, enums_1.COLLECTION_NAME_ENUM.invoice_type, invoice_type_schema_1.InvoiceTypeSchema));
         new base_router_1.BaseRoute(this.app, new base_controller_1.BaseController(null, enums_1.COLLECTION_NAME_ENUM.item_process, item_process_schema_1.ItemProcessSchema));
+        new base_router_1.BaseRoute(this.app, new base_controller_1.BaseController(null, enums_1.COLLECTION_NAME_ENUM.notification, notification_schema_1.NotificationSchema));
         new base_router_1.BaseRoute(this.app, new base_controller_1.BaseController(null, enums_1.COLLECTION_NAME_ENUM.convertion_rate, convertion_rate_schema_1.ConvertionRateSchema));
         new base_router_1.BaseRoute(this.app, new base_controller_1.BaseController(null, enums_1.COLLECTION_NAME_ENUM.debit_note_type, debit_note_type_schema_1.DebitNoteTypeSchema));
         new base_router_1.BaseRoute(this.app, new base_controller_1.BaseController(null, enums_1.COLLECTION_NAME_ENUM.credit_note_type, credit_note_type_schema_1.CreditNoteTypeSchema));
