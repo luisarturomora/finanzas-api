@@ -116,7 +116,10 @@ class AppServer{
         });
 
         this.app.use(cors({
-            origin: '*'
+            origin: '*',
+            methods: "GET,HEAD,POST,PUT,PATCH,DELETE",
+            preflightContinue: false,
+            optionsSuccessStatus: 204
         }));
 
         this.app.use('/api/v1', expressJwt({secret: this.sessionConfig.secret } ) );
