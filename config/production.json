@@ -1,6 +1,6 @@
 {
     "dbConfig":{
-        "host": "127.0.0.1",
+        "host": "172.29.0.20",
         "port": "27017",
         "dbName": "finanzas",
         "user": "sa",
