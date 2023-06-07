@@ -90,7 +90,10 @@ var AppServer = /** @class */ (function () {
             next();
         });
         this.app.use(cors({
-            origin: '*'
+            origin: '*',
+            methods: "GET,HEAD,POST,PUT,PATCH,DELETE",
+            preflightContinue: false,
+            optionsSuccessStatus: 204
         }));
         this.app.use('/api/v1', expressJwt({ secret: this.sessionConfig.secret }));
         this.app.use(body_parser_1.json({ limit: this.max_file_size }));
@@ -99,6 +102,7 @@ var AppServer = /** @class */ (function () {
         if (ssl) {
             try {
                 mongoose.connect("mongodb://" + user + ":" + pwd + "@" + host + ":" + port + "/" + db + "?ssl=true&authSource=admin&replicaSet=Cluster0-shard-0");
+                console.log('conected to mongo');
             }
             catch (e) {
                 console.log(e);
@@ -113,6 +117,7 @@ var AppServer = /** @class */ (function () {
                 pass: pwd,
                 useNewUrlParser: true
             });
+            console.log('conected to mongo');
         }
         else {
             mongoose.connect(url, { useNewUrlParser: true });

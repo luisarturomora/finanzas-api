@@ -136,6 +136,7 @@ class AppServer{
         if(ssl){
             try{
                 mongoose.connect( `mongodb://${user}:${pwd}@${host}:${port}/${db}?ssl=true&authSource=admin&replicaSet=Cluster0-shard-0`);
+                console.log('conected to mongo')
             }catch(e){
                 console.log(e)
             }
@@ -149,6 +150,7 @@ class AppServer{
                 pass: pwd,
                 useNewUrlParser: true
             });
+            console.log('conected to mongo')
         }
         else{
             mongoose.connect(url, { useNewUrlParser: true });
