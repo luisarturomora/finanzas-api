@@ -151,6 +151,7 @@ var COLLECTION_NAME_ENUM;
     COLLECTION_NAME_ENUM["workflow_process"] = "workflow_process";
     COLLECTION_NAME_ENUM["approve_process"] = "approve_process";
     COLLECTION_NAME_ENUM["manual_entry"] = "manual_entry";
+    COLLECTION_NAME_ENUM["manual_entry_old"] = "manual_entry_old";
 })(COLLECTION_NAME_ENUM = exports.COLLECTION_NAME_ENUM || (exports.COLLECTION_NAME_ENUM = {}));
 var FREQUENCY_TYPE_ENUM;
 (function (FREQUENCY_TYPE_ENUM) {

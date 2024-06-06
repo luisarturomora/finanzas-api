@@ -44,6 +44,7 @@ var acknowledgment_route_1 = require("./routes/administration/acknowledgment.rou
 var purchase_route_1 = require("./routes/administration/purchase.route");
 var stock_route_1 = require("./routes/inventory/stock.route");
 var manual_entry_route_1 = require("./routes/administration/manual.entry.route");
+var manual_entry_old_route_1 = require("./routes/administration/manual.entry.old.route");
 var tax_schema_1 = require("./schemas/configuration/tax.schema");
 var box_schema_1 = require("./schemas/configuration/box.schema");
 var account_schema_1 = require("./schemas/configuration/account.schema");
@@ -136,6 +137,7 @@ var AppServer = /** @class */ (function () {
         new acknowledgment_route_1.AcknowledgmentRoute(this.app);
         new stock_route_1.StockRoute(this.app);
         new manual_entry_route_1.ManualEntryRoute(this.app);
+        new manual_entry_old_route_1.ManualEntryOldRoute(this.app);
         new approve_process_route_1.ApproveProcessRoute(this.app);
         new base_router_1.BaseRoute(this.app, new base_controller_1.BaseController(null, enums_1.COLLECTION_NAME_ENUM.client, client_schema_1.ClientSchema));
         new base_router_1.BaseRoute(this.app, new base_controller_1.BaseController(null, enums_1.COLLECTION_NAME_ENUM.employee, employee_schema_1.EmployeeSchema));

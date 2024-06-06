@@ -146,7 +146,8 @@ export enum COLLECTION_NAME_ENUM{
     workflow = 'workflow',
     workflow_process = 'workflow_process',
     approve_process = 'approve_process',
-    manual_entry = 'manual_entry'
+    manual_entry = 'manual_entry',
+    manual_entry_old = 'manual_entry_old'
 }
 
 export enum FREQUENCY_TYPE_ENUM{

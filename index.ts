@@ -51,6 +51,7 @@ import { AcknowledgmentRoute } from './routes/administration/acknowledgment.rout
 import { PurchaseRoute } from './routes/administration/purchase.route';
 import { StockRoute } from './routes/inventory/stock.route';
 import { ManualEntryRoute } from './routes/administration/manual.entry.route';
+import { ManualEntryOldRoute } from './routes/administration/manual.entry.old.route';
 
 import { TaxSchema } from './schemas/configuration/tax.schema';
 import { BoxSchema } from './schemas/configuration/box.schema';
@@ -174,6 +175,7 @@ class AppServer{
         new AcknowledgmentRoute(this.app);
         new StockRoute(this.app);
         new ManualEntryRoute(this.app);
+        new ManualEntryOldRoute(this.app);
         new ApproveProcessRoute(this.app);
 
         new BaseRoute(this.app, new BaseController(null, COLLECTION_NAME_ENUM.client, ClientSchema ));
