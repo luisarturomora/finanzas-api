@@ -1,12 +1,12 @@
 {
     "dbConfig":{
-        "host": "3.140.192.243",
+        "host": "10.151.27.185",
         "port": "27000",
         "dbName": "finanzas",
         "user": "sa",
         "password": "Aa@123456"
     },
-    "port":"8081",
+    "port":"8881",
     "is_saas": false,
     "max_file_size": "2mb",
     "invoice_generattion_hour": 16,
